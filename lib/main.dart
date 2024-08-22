@@ -30,7 +30,8 @@ class MyWidget extends StatefulWidget {
 class _MyWidgetState extends State<MyWidget> {
   final _distanceController = TextEditingController();
   final _litresController = TextEditingController();
-  double _result = 0;
+  double _averageResult = 0;
+  final List<double> _results = [];
   final List<String> _log = [];
 
   @override
@@ -45,16 +46,18 @@ class _MyWidgetState extends State<MyWidget> {
         _litresController.text.isNotEmpty) {
       double distance = double.tryParse(_distanceController.text) ?? 0.0;
       double litres = double.tryParse(_litresController.text) ?? 1.0;
-      _result = distance / litres;
+      double result = distance / litres;
 
       DateTime now = DateTime.now();
       String dateTimeString =
           '${now.day}/${now.month}/${now.year} ${now.hour}:${now.minute}';
 
       String logEntry =
-          '$dateTimeString - $distance km / $litres L = ${_result.toStringAsFixed(1)} km/L';
+          '$dateTimeString - $distance km / $litres L = ${result.toStringAsFixed(1)} km/L';
 
       setState(() {
+        _results.add(result);
+        _averageResult = _results.reduce((a, b) => a + b) / _results.length;
         _log.insert(0, logEntry);
       });
     }
@@ -71,7 +74,7 @@ class _MyWidgetState extends State<MyWidget> {
             mainAxisSize: MainAxisSize.min,
             children: [
               const Text(
-                'This is a simple Fuel Economy Calculator app. Calculate your fuel efficiency and keep track of your vehicle\'s fuel consumption.',
+                'This is a simple Fuel Economy Calculator app. Calculate your fuel efficiency and keep track of your vehicle\'s fuel consumption overtime.',
               ),
               const SizedBox(height: 20), // Increased spacing
               const Text(
@@ -227,12 +230,12 @@ class _MyWidgetState extends State<MyWidget> {
               },
               child: const Text('Calculate'),
             ),
-            Text(_result.toStringAsFixed(1),
+            Text(_averageResult.toStringAsFixed(1),
                 style: const TextStyle(fontSize: 100)),
             const Align(
               alignment: AlignmentDirectional(0, -1),
               child: Text(
-                'km/L',
+                'km/L (Average)',
                 style: TextStyle(fontSize: 50),
               ),
             ),
@@ -268,7 +271,6 @@ class _MyWidgetState extends State<MyWidget> {
   }
 
   void showConfirmationDialog(BuildContext context) {
-    _result = 0;
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -287,7 +289,8 @@ class _MyWidgetState extends State<MyWidget> {
               onPressed: () {
                 setState(() {
                   _log.clear();
-                  _result = 0; // Reset the calculation result
+                  _results.clear(); // Clear the results list
+                  _averageResult = 0; // Reset the average result
                 });
                 Navigator.of(context).pop();
               },
