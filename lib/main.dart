@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher_string.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   runApp(const MyApp());
@@ -35,6 +36,12 @@ class _MyWidgetState extends State<MyWidget> {
   final List<String> _log = [];
 
   @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  @override
   void dispose() {
     _distanceController.dispose();
     _litresController.dispose();
@@ -59,6 +66,26 @@ class _MyWidgetState extends State<MyWidget> {
         _results.add(result);
         _averageResult = _results.reduce((a, b) => a + b) / _results.length;
         _log.insert(0, logEntry);
+        _saveData();
+      });
+    }
+  }
+
+  Future<void> _saveData() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setStringList('log', _log);
+    prefs.setDouble('averageResult', _averageResult);
+  }
+
+  Future<void> _loadData() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    List<String>? savedLog = prefs.getStringList('log');
+    double? savedAverageResult = prefs.getDouble('averageResult');
+
+    if (savedLog != null && savedAverageResult != null) {
+      setState(() {
+        _log.addAll(savedLog);
+        _averageResult = savedAverageResult;
       });
     }
   }
@@ -291,6 +318,7 @@ class _MyWidgetState extends State<MyWidget> {
                   _log.clear();
                   _results.clear(); // Clear the results list
                   _averageResult = 0; // Reset the average result
+                  _saveData(); // Save the cleared state
                 });
                 Navigator.of(context).pop();
               },
